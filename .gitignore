@@ -1,0 +1,32 @@
+# deps
+node_modules/
+
+# run data: uploaded bug videos, frames, results (work data, never commit)
+data/
+
+# videos anywhere else in the tree
+*.mov
+*.mp4
+*.webm
+*.mkv
+*.m4v
+
+# secrets
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# misc
+coverage/
+tmp/
