@@ -1,0 +1,19 @@
+{
+  "name": "video-repro",
+  "version": "0.1.0",
+  "description": "Upload a bug video, get repro steps.",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.134.0",
+    "express": "^5.3.0",
+    "multer": "^2.4.0",
+    "zod": "^4.6.7"
+  }
+}

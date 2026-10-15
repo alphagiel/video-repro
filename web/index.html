@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Repro</title>
+<style>
+  :root {
+    --bg: #f6f6f4; --panel: #ffffff; --text: #1c1c1a; --muted: #6b6b66; --line: #e2e2dc;
+    --accent: #2f5bd3; --high: #1f8a4c; --medium: #b7791f; --low: #c0392b; --chip: #f0f0ec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141413; --panel: #1d1d1b; --text: #ececea; --muted: #9a9a94; --line: #2e2e2b;
+      --accent: #6f93f0; --high: #4cc283; --medium: #e0a948; --low: #ec6f61; --chip: #262624;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 -apple-system, system-ui, sans-serif; }
+  main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 20px 0 8px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  form { display: grid; gap: 12px; }
+  .drop { border: 2px dashed var(--line); border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; color: var(--muted); }
+  .drop.over, .drop:hover { border-color: var(--accent); color: var(--text); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+  textarea { resize: vertical; field-sizing: content; min-height: 2.6em; max-height: 300px; }
+  input[type=text], textarea { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+  button { font: inherit; border: 0; border-radius: 6px; padding: 9px 16px; background: var(--accent); color: #fff; cursor: pointer; }
+  button.ghost { background: var(--chip); color: var(--text); }
+  button.danger { background: none; color: var(--low); border: 1px solid var(--line); margin-left: auto; }
+  button:disabled { opacity: .5; cursor: default; }
+  .status { margin-top: 16px; color: var(--muted); }
+  .error { color: var(--low); }
+  .result { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px; margin-top: 20px; }
+  .sticky { position: sticky; top: 16px; align-self: start; }
+  video { width: 100%; border-radius: 8px; background: #000; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { background: var(--chip); border-radius: 999px; padding: 2px 10px; font-size: 12px; color: var(--muted); }
+  ol.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  .step { display: grid; grid-template-columns: 28px 1fr 120px; gap: 10px; align-items: start; padding: 10px; border: 1px solid var(--line); border-radius: 8px; }
+  .step .n { font-weight: 600; color: var(--muted); }
+  .step img { width: 120px; border-radius: 4px; cursor: zoom-in; border: 1px solid var(--line); }
+  .step .note { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .when { font-size: 12px; background: none; color: var(--accent); padding: 0; margin-right: 8px; }
+  .conf { position: relative; font-size: 11px; font-weight: 600; text-transform: uppercase; border-bottom: 1px dotted currentColor; }
+  .conf::after {
+    content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 6px); z-index: 10;
+    width: 240px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--text); box-shadow: 0 4px 14px rgba(0,0,0,.15);
+    font-size: 12px; font-weight: 400; text-transform: none; line-height: 1.4;
+    opacity: 0; pointer-events: none; transition: opacity .1s;
+  }
+  .conf:hover::after { opacity: 1; }
+  .conf.high { color: var(--high); } .conf.medium { color: var(--medium); } .conf.low { color: var(--low); }
+  .ea { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ea div { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+  ul.gaps { margin: 0; padding-left: 18px; }
+  .actions { display: flex; gap: 8px; margin-top: 16px; }
+  .engine { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 20px; }
+  .engine legend { font-size: 13px; color: var(--muted); padding: 0; margin-bottom: 4px; }
+  .engine label { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text); }
+  .engine label span { color: var(--muted); font-size: 12px; }
+  .runs { padding: 0; }
+  .runs .empty { padding: 16px; color: var(--muted); }
+  .run { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 2px 12px; padding: 10px 16px; border-top: 1px solid var(--line); cursor: pointer; }
+  .run:first-child { border-top: 0; }
+  .run:hover { background: var(--chip); }
+  .run.active { box-shadow: inset 3px 0 0 var(--accent); }
+  .run .t { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .run .m { font-size: 12px; color: var(--muted); grid-column: 1 / 3; }
+  .run .x { grid-column: 3; grid-row: 1 / span 2; align-self: center; font-size: 12px; padding: 5px 10px; opacity: 0; transition: opacity .1s; }
+  .run:hover .x, .run .x:focus, .run .x[data-armed] { opacity: 1; }
+  @media (hover: none) { .run .x { opacity: 1; } }
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .run .s { font-size: 12px; color: var(--muted); }
+  .run .s.error { color: var(--low); }
+  dialog { border: 0; padding: 0; background: transparent; max-width: 95vw; }
+  dialog img { max-width: 95vw; max-height: 90vh; border-radius: 6px; }
+  dialog::backdrop { background: rgba(0,0,0,.75); }
+  @media (max-width: 800px) {
+    .result, .row, .ea { grid-template-columns: 1fr; }
+    .sticky { position: static; }
+    .step { grid-template-columns: 24px 1fr; }
+    .step img { grid-column: 2; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Video Repro</h1>
+      <p class="sub">Drop in a bug recording and get back repro steps.</p>
+    </div>
+    <button class="ghost" id="toRuns">Past runs</button>
+  </header>
+
+  <div class="panel">
+    <form id="form">
+      <div class="drop" id="drop">
+        <input type="file" id="file" name="video" accept="video/*" hidden>
+        <span id="dropText">Drop a video here or click to pick one</span>
+      </div>
+      <label>What's the bug? (optional, but helps a lot. One line or paste the whole Jira ticket)
+        <textarea name="description" rows="2" placeholder="e.g. Saving a price change doesn't update the total"></textarea>
+      </label>
+      <div class="row">
+        <label>Environment
+          <input type="text" name="env" placeholder="staging / prod / local">
+        </label>
+        <label>Account / role
+          <input type="text" name="role" placeholder="e.g. buyer admin">
+        </label>
+      </div>
+      <fieldset class="engine">
+        <legend>Analyze with</legend>
+        <label><input type="radio" name="engine" value="claude-code" checked> Work seat <span>(Claude Code, Team login, under a minute)</span></label>
+        <label><input type="radio" name="engine" value="api"> Personal API key <span>(faster, ~$0.40, sends the video to your personal account)</span></label>
+      </fieldset>
+      <div><button id="submit" disabled>Generate repro steps</button></div>
+    </form>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div id="out"></div>
+
+  <h2 id="runsTitle">Past runs</h2>
+  <div class="panel runs" id="runs">Loading...</div>
+</main>
+<dialog id="zoom"><img alt=""></dialog>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const form = $('#form'), fileInput = $('#file'), drop = $('#drop'), statusEl = $('#status'), out = $('#out');
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+const kTok = (n) => n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+// Work-seat runs aren't billed per token; their cost is only what it would be at API prices.
+function usageText(u, long) {
+  if (!u) return null;
+  const tokens = `${kTok(u.input_tokens)} in / ${kTok(u.output_tokens)} out`;
+  if (u.billed) return `${tokens} · $${u.cost_usd.toFixed(2)}`;
+  if (u.cost_usd == null) return `${tokens} · work seat`;
+  return long ? `${tokens} · ~$${u.cost_usd.toFixed(2)} at API prices, not billed` : `${tokens} · work seat`;
+}
+const CONF_TIPS = {
+  high: 'Clearly visible in the video.',
+  medium: 'Mostly clear, some guessing. E.g. the result is visible but the click itself is not.',
+  low: "Not visible, but it must have happened. E.g. typing too fast to read, or done before recording. Double-check this one.",
+};
+
+function pick(file) {
+  if (!file) return;
+  const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files;
+  $('#dropText').textContent = `${file.name} (${(file.size / 1e6).toFixed(1)} MB)`;
+  $('#submit').disabled = false;
+}
+drop.onclick = () => fileInput.click();
+fileInput.onchange = () => pick(fileInput.files[0]);
+drop.ondragover = (e) => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove('over'); pick(e.dataTransfer.files[0]); };
+
+form.onsubmit = async (e) => {
+  e.preventDefault();
+  $('#submit').disabled = true;
+  out.innerHTML = '';
+  statusEl.className = 'status';
+  statusEl.textContent = 'Uploading...';
+  try {
+    const res = await fetch('/api/jobs', { method: 'POST', body: new FormData(form) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    history.replaceState(null, '', `#${data.id}`);
+    loadRuns();
+    poll(data.id);
+  } catch (err) {
+    fail(err.message);
+  }
+};
+
+function fail(msg) {
+  statusEl.className = 'status error';
+  statusEl.textContent = msg;
+  $('#submit').disabled = !fileInput.files.length;
+}
+
+async function poll(id) {
+  const started = Date.now();
+  while (true) {
+    const res = await fetch(`/api/jobs/${id}`);
+    const job = await res.json();
+    if (location.hash.slice(1) !== id) return; // user switched to another run
+    if (!res.ok) return fail(job.error);
+    if (job.status === 'error') { loadRuns(); return fail(`Failed: ${job.error}`); }
+    if (job.status === 'done') {
+      statusEl.textContent = '';
+      $('#submit').disabled = !fileInput.files.length;
+      loadRuns();
+      return render(job);
+    }
+    statusEl.textContent = `${job.stage}... (${Math.round((Date.now() - started) / 1000)}s)`;
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+}
+
+function render(job) {
+  const r = job.result;
+  const frameUrl = (i) => job.frames[i] ? `/files/${job.id}/frames/${job.frames[i].file}` : '';
+  const audioLabel = { none: 'no audio', silent: 'silent', transcribed: 'narration used', 'speech-skipped': 'narration ignored (whisper off)' }[job.audio];
+
+  out.innerHTML = `
+    <div class="result">
+      <div class="sticky">
+        <video id="vid" src="${job.video}" controls preload="metadata"></video>
+        <div class="meta">
+          <span class="chip">${esc(job.fileName)}</span>
+          <span class="chip">${fmt(job.duration)}</span>
+          <span class="chip">${job.frames.length} frames</span>
+          <span class="chip">${job.idle.length} idle spans</span>
+          <span class="chip">${audioLabel}</span>
+          <span class="chip">${job.source === 'claude-code' ? 'work seat' : 'personal API key'}</span>
+          <span class="chip">${usageText(job.usageSummary, true) ?? 'tokens not recorded'}</span>
+          ${r.bug_time_sec != null ? `<button class="chip when" data-t="${r.bug_time_sec}">bug at ${fmt(r.bug_time_sec)}</button>` : ''}
+        </div>
+      </div>
+      <div class="panel">
+        <h1>${esc(r.title)}</h1>
+        <p class="sub">${esc(r.summary)}</p>
+        ${r.preconditions.length ? `<h2>Preconditions</h2><ul class="gaps">${r.preconditions.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
+        <h2>Steps</h2>
+        <ol class="steps">
+          ${r.steps.map((s, i) => `
+            <li class="step">
+              <span class="n">${i + 1}</span>
+              <div>
+                <div>${esc(s.action)}</div>
+                <div><button class="when" data-t="${s.time_sec}">▶ ${fmt(s.time_sec)}</button><span class="conf ${s.confidence}" data-tip="${esc(CONF_TIPS[s.confidence])}">${s.confidence}</span></div>
+                ${s.note ? `<div class="note">${esc(s.note)}</div>` : ''}
+              </div>
+              ${frameUrl(s.frame) ? `<img src="${frameUrl(s.frame)}" alt="Frame for step ${i + 1}" loading="lazy">` : ''}
+            </li>`).join('')}
+        </ol>
+        <h2>Expected vs actual</h2>
+        <div class="ea"><div><strong>Expected</strong><br>${esc(r.expected)}</div><div><strong>Actual</strong><br>${esc(r.actual)}</div></div>
+        ${r.gaps.length ? `<h2>Couldn't tell from the video</h2><ul class="gaps">${r.gaps.map((g) => `<li>${esc(g)}</li>`).join('')}</ul>` : ''}
+        <div class="actions">
+          <button id="copy">Copy as Jira markdown</button>
+          <button class="ghost" id="copyJson">Copy JSON</button>
+          <button class="danger" id="del">Delete this run</button>
+        </div>
+      </div>
+    </div>`;
+
+  const vid = $('#vid');
+  out.querySelectorAll('[data-t]').forEach((b) => b.onclick = () => { vid.currentTime = Number(b.dataset.t); vid.play(); });
+  out.querySelectorAll('.step img').forEach((img) => img.onclick = () => { $('#zoom img').src = img.src; $('#zoom').showModal(); });
+  $('#copy').onclick = (e) => copy(e.target, toJira(job));
+  $('#copyJson').onclick = (e) => copy(e.target, JSON.stringify(r, null, 2));
+  $('#del').onclick = (e) => del(e.target, job.id, 'Click again to delete (video + steps)');
+}
+
+// Two clicks to delete: first click arms it, second within 3s deletes.
+async function del(btn, id, armedLabel) {
+  if (!btn.dataset.armed) {
+    const label = btn.textContent;
+    btn.dataset.armed = '1';
+    btn.textContent = armedLabel;
+    setTimeout(() => { delete btn.dataset.armed; btn.textContent = label; }, 3000);
+    return;
+  }
+  btn.disabled = true;
+  const res = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+  if (!res.ok) { btn.disabled = false; return fail((await res.json()).error); }
+  if (location.hash.slice(1) === id) {
+    out.innerHTML = '';
+    history.replaceState(null, '', location.pathname);
+  }
+  statusEl.className = 'status';
+  statusEl.textContent = 'Run deleted.';
+  loadRuns();
+}
+
+$('#toRuns').onclick = () => $('#runsTitle').scrollIntoView({ behavior: 'smooth' });
+
+$('#zoom').onclick = () => $('#zoom').close();
+
+async function copy(btn, text) {
+  await navigator.clipboard.writeText(text);
+  const label = btn.textContent;
+  btn.textContent = 'Copied';
+  setTimeout(() => (btn.textContent = label), 1200);
+}
+
+function toJira(job) {
+  const r = job.result, m = job.meta;
+  const lines = [`## ${r.title}`, '', r.summary, ''];
+  if (m.env || m.role) lines.push(`**Environment:** ${m.env || '-'}  `, `**Account / role:** ${m.role || '-'}`, '');
+  if (r.preconditions.length) lines.push('### Preconditions', ...r.preconditions.map((p) => `- ${p}`), '');
+  lines.push('### Steps to reproduce');
+  r.steps.forEach((s, i) => {
+    const flag = s.confidence === 'high' ? '' : ` _(${s.confidence} confidence${s.note ? `: ${s.note}` : ''})_`;
+    lines.push(`${i + 1}. ${s.action} [${fmt(s.time_sec)}]${flag}`);
+  });
+  lines.push('', '### Expected', r.expected, '', '### Actual', r.actual);
+  if (r.gaps.length) lines.push('', '### Open questions', ...r.gaps.map((g) => `- ${g}`));
+  lines.push('', `_Generated from ${job.fileName}${r.bug_time_sec != null ? `, bug visible at ${fmt(r.bug_time_sec)}` : ''}_`);
+  return lines.join('\n');
+}
+
+async function loadRuns() {
+  const box = $('#runs');
+  try {
+    const runs = await (await fetch('/api/jobs')).json();
+    $('#toRuns').textContent = `Past runs (${runs.length})`;
+    if (!runs.length) { box.innerHTML = '<div class="empty">No runs yet.</div>'; return; }
+    const current = location.hash.slice(1);
+    box.innerHTML = runs.map((r) => {
+      const when = new Date(r.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      const status = r.status === 'done' ? `${r.steps} steps` : r.status === 'error' ? 'failed' : 'running...';
+      const via = r.usage ? ` · ${usageText(r.usage)}` : r.source === 'claude-code' ? ' · work seat' : ' · personal API key';
+      return `<div class="run ${r.id === current ? 'active' : ''}" data-id="${r.id}">
+        <span class="t">${esc(r.title || r.fileName)}</span>
+        <span class="s ${r.status}">${status}</span>
+        ${r.status === 'running' ? '' : '<button class="danger x" title="Delete this run">Delete</button>'}
+        <span class="m">${when} · ${esc(r.fileName)}${r.duration ? ` · ${fmt(r.duration)}` : ''}${via}</span>
+      </div>`;
+    }).join('');
+    box.querySelectorAll('.run').forEach((row) => {
+      row.onclick = () => { location.hash = row.dataset.id; };
+      const x = row.querySelector('.x');
+      if (x) x.onclick = (e) => { e.stopPropagation(); del(x, row.dataset.id, 'Sure?'); };
+    });
+  } catch {
+    box.innerHTML = '<div class="empty">Couldn\'t load runs.</div>';
+  }
+}
+
+function openFromHash() {
+  out.innerHTML = '';
+  if (location.hash.length > 1) { statusEl.className = 'status'; statusEl.textContent = 'Loading...'; poll(location.hash.slice(1)); }
+  loadRuns();
+}
+
+window.addEventListener('hashchange', () => { openFromHash(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+openFromHash();
+</script>
+</body>
+</html>
