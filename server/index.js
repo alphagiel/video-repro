@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { randomUUID } from 'node:crypto';
 import { mkdir, rename, writeFile, readFile, readdir, rm } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyze } from './analyze.js';
@@ -10,13 +11,15 @@ import { detectIdle, detectSpeech, extractFrames, probe } from './preprocess.js'
 import { transcribe, whisperAvailable } from './transcribe.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const JOBS_DIR = path.join(ROOT, 'data', 'jobs');
+// Run data lives outside the package so global installs and upgrades don't touch it.
+const DATA_DIR = process.env.VIDEO_REPRO_DATA || path.join(os.homedir(), '.video-repro');
+const JOBS_DIR = path.join(DATA_DIR, 'jobs');
 const PORT = Number(process.env.PORT) || 4320;
 
 await mkdir(JOBS_DIR, { recursive: true });
 
 const upload = multer({
-  dest: path.join(ROOT, 'data', 'uploads'),
+  dest: path.join(DATA_DIR, 'uploads'),
   limits: { fileSize: 1024 * 1024 * 1024 },
 });
 
@@ -174,5 +177,6 @@ app.delete('/api/jobs/:id', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`video-repro on http://localhost:${PORT}`);
+  console.log(`data: ${DATA_DIR}`);
   console.log(`whisper: ${whisperAvailable() ? 'on' : 'off (set WHISPER_MODEL to enable)'}`);
 });

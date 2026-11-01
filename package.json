@@ -15,5 +15,24 @@
     "express": "^5.3.0",
     "multer": "^2.4.0",
     "zod": "^4.6.7"
-  }
+  },
+  "bin": {
+    "video-repro": "bin/video-repro.js"
+  },
+  "files": [
+    "bin",
+    "server",
+    "web"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alphagiel/video-repro.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "bug",
+    "repro",
+    "qa",
+    "claude"
+  ]
 }
