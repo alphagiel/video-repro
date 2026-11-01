@@ -17,7 +17,7 @@ Drop in a QA bug recording, get back step-by-step repro steps with timestamps an
 
 Works on silent recordings. If the tester talks, that can be used too (see [Narration](#narration-optional)).
 
-## Setup
+## Install
 
 You need:
 
@@ -30,13 +30,12 @@ You need:
 Then:
 
 ```bash
-git clone git@github.com:alphagiel/video-repro.git
-cd video-repro
-npm install
-npm start
+npx video-repro
 ```
 
 Open **http://localhost:4320**.
+
+Use it a lot? Install it once with `npm i -g video-repro`, then just run `video-repro`.
 
 ## How to use it
 
@@ -57,7 +56,49 @@ A 20 to 60 second video usually takes under a minute.
 
 The work seat runs Claude Code in a locked-down mode: no shell, no web, no MCP servers, and it can only touch that run's folder. The app hides `ANTHROPIC_API_KEY` from it so it always uses your login.
 
-## How it works
+## Where your runs are saved
+
+`~/.video-repro/jobs/<id>/`: the video, the frames used, and `job.json` with the result. Delete a run from the page, or just delete its folder. Change the location with `VIDEO_REPRO_DATA`.
+
+## Narration (optional)
+
+Off by default. To turn it on, install whisper.cpp and point it at a model:
+
+```bash
+brew install whisper-cpp
+mkdir -p ~/models
+curl -L -o ~/models/ggml-base.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
+WHISPER_MODEL=~/models/ggml-base.en.bin npx video-repro
+```
+
+## Config
+
+| Env var | Default | What it does |
+|---|---|---|
+| `PORT` | `4320` | Port for the web page |
+| `VIDEO_REPRO_DATA` | `~/.video-repro` | Where runs are saved |
+| `ANTHROPIC_API_KEY` | none | Needed only for the API key option |
+| `WHISPER_MODEL` | none | Path to a whisper.cpp model; turns narration on |
+| `WHISPER_CMD` | `whisper-cli` | whisper.cpp binary name |
+
+## Tips for QA
+
+- **Start recording before reproducing**, not after. Steps that happened before recording can only be guessed.
+- **Keep DevTools Network open** if it's an API bug. The status codes and URLs end up in the steps.
+- Turn on **click highlighting** in your recorder if it has one.
+
+## Contributing
+
+### Run from source
+
+```bash
+git clone git@github.com:alphagiel/video-repro.git
+cd video-repro
+npm install
+npm run dev
+```
+
+### How it works
 
 ```
 video ─┬─ ffprobe: length, audio track?
@@ -70,35 +111,7 @@ video ─┬─ ffprobe: length, audio track?
               Claude → repro steps as JSON → results page
 ```
 
-Everything for a run lives in `data/jobs/<id>/`: the video, the frames that were used, and `job.json` with the result. That folder is git-ignored. Delete a run from the page, or just delete its folder.
-
-## Narration (optional)
-
-Off by default. To turn it on, install whisper.cpp and point it at a model:
-
-```bash
-brew install whisper-cpp
-mkdir -p ~/models
-curl -L -o ~/models/ggml-base.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
-WHISPER_MODEL=~/models/ggml-base.en.bin npm start
-```
-
-## Config
-
-| Env var | Default | What it does |
-|---|---|---|
-| `PORT` | `4320` | Port for the web page |
-| `ANTHROPIC_API_KEY` | none | Needed only for the API key option |
-| `WHISPER_MODEL` | none | Path to a whisper.cpp model; turns narration on |
-| `WHISPER_CMD` | `whisper-cli` | whisper.cpp binary name |
-
-## Tips for QA
-
-- **Start recording before reproducing**, not after. Steps that happened before recording can only be guessed.
-- **Keep DevTools Network open** if it's an API bug. The status codes and URLs end up in the steps.
-- Turn on **click highlighting** in your recorder if it has one.
-
-## Roadmap
+### Roadmap
 
 - [ ] **Auto-verify**: replay the steps on staging with Playwright and confirm the bug shows up
 - [ ] **Push to Jira**: create the ticket straight from the results page
