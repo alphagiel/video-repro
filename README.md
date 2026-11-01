@@ -2,10 +2,7 @@
 
 Drop in a QA bug recording, get back step-by-step repro steps with timestamps and screenshots.
 
-<!-- DEMO: drop a GIF or video link here, e.g.
-![demo](docs/demo.gif)
--->
-> 🎬 **Demo video coming soon.**
+https://github.com/user-attachments/assets/075e2e04-6dca-4f36-8228-14b6171743d1
 
 ## What you get
 
