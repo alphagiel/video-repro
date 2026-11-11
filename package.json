@@ -1,6 +1,6 @@
 {
   "name": "video-repro",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Upload a bug video, get repro steps.",
   "type": "module",
   "scripts": {

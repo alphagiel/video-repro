@@ -2,7 +2,7 @@
 
 Drop in a QA bug recording, get back step-by-step repro steps with timestamps and screenshots.
 
-https://github.com/user-attachments/assets/075e2e04-6dca-4f36-8228-14b6171743d1
+[![Demo](https://cdn.loom.com/sessions/thumbnails/4a5944e65a564e88af574f5c8d9114af-ebe426bb481be923.gif)](https://www.loom.com/share/4a5944e65a564e88af574f5c8d9114af)
 
 ## What you get
 
