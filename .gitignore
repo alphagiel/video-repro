@@ -30,3 +30,6 @@ Thumbs.db
 # misc
 coverage/
 tmp/
+
+# agensi build output
+agensi/*.zip
